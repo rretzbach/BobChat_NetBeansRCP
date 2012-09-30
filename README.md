@@ -1,7 +1,9 @@
 BobChat
 =======
 
-IRC Desktop Client using Netbeans' sophisticated window system
+An IRC Desktop Client using Netbeans' sophisticated Window System
+
+![](https://raw.github.com/rretzbach/BobChat/master/branding/core/core.jar/org/netbeans/core/startup/splash.gif)
 
 How to build
 ============
@@ -14,7 +16,7 @@ How to build
 Testmode
 ========
 
-To simplify testing the client a mock object was created which allows running the application without actually connecting to any irc network.
+To simplify testing the client a mock object was created which allows running the application without actually connecting to any IRC network.
 
 To switch to the real thing change the following statement in the constructor of the Network class:
 
