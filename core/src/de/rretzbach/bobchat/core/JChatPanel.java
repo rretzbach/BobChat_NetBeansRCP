@@ -32,6 +32,7 @@ import javax.swing.SwingUtilities;
  *
  * @author rretzbach
  */
+// TODO not possible to scroll up
 public class JChatPanel extends javax.swing.JPanel implements ChatMessageListener, Scrollable {
 
     private static final Map<?, ?> DESKTOPHINTS = (Map<?, ?>) Toolkit
@@ -39,6 +40,7 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
     private ArrayList<ChatMessage> messages = new ArrayList<ChatMessage>();
     private Channel channel;
     private Integer rulerPosition = null;
+    private ChatMessageRenderer chatMessageRenderer = new ChatMessageRenderer();
 
     /**
      * Creates new form JChatPanel2
@@ -93,6 +95,7 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
     @Override
     public synchronized void onMessage(ChatMessage message) {
         messages.add(message);
+        chatMessageRenderer.setInput(message);
 
         int col = 0;
         int row = this.messages.size() + 1;
@@ -102,7 +105,7 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
             gbc.gridy = row;
             gbc.insets = new Insets(0, 5, 0, 3);
             gbc.anchor = GridBagConstraints.NORTHWEST;
-            add(new JLabel(message.timestamp.toString()), gbc);
+            add(chatMessageRenderer.renderTimestamp(), gbc);
         }
         {
             GridBagConstraints gbc = new GridBagConstraints();
@@ -110,7 +113,7 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
             gbc.gridy = row;
             gbc.insets = new Insets(0, 15, 0, 3);
             gbc.anchor = GridBagConstraints.NORTHEAST;
-            add(new JLabel(message.nick), gbc);
+            add(chatMessageRenderer.renderNick(), gbc);
         }
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -120,8 +123,7 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
-        final JTextArea textArea = new LabelTextArea(message.message);
-        add(textArea, gbc);
+        add(chatMessageRenderer.renderMessage(), gbc);
 
 
         validate();

@@ -135,7 +135,7 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
     public void registerComponent() {
         System.out.println("registering window " + getName());
         final Network network = Router.get().getNetwork(hostname);
-        jLabel1.setText(network.getNick());
+        
         Conversation conversation = null;
         if (this.type.equals("channel")) {
             Channel channel = network.getChannel(getName());
@@ -144,6 +144,8 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
             Query query = network.getQuery(getName());
             conversation = query;
         }
+        jLabel1.setText(conversation.getNetwork().getNick());
+        
         setConversation(conversation);
     }
 

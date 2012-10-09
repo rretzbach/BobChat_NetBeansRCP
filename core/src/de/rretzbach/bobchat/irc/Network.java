@@ -38,7 +38,7 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
         this.identity = identity;
         this.hostname = hostname;
         // exchange implementations by using either TestBot or MainBot
-        this.bot = new TestBot(identity) {
+        this.bot = new MainBot(identity) {
             @Override
             public void onConnect() {
                 Network.this.onConnect();
@@ -146,8 +146,6 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     public void onMessage(final String channel, final String sender, final String login, String hostname, final String message) {
         Channel findChannelByName = findChannelByName(channel);
         findChannelByName.onMessage(sender, login, message);
-
-        // TODO Was passiert mit Nachrichten zu denen das Target noch nicht existiert
     }
 
     @Override

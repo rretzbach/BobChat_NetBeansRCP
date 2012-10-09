@@ -32,7 +32,7 @@ public class Config {
         this.identities.put("irc.freenode.net", freenodeIdentity);
 
         final Identity izsmartIdentity = new Identity();
-        izsmartIdentity.nick = "Ostwind";
+        izsmartIdentity.nick = "Osti";
         izsmartIdentity.nick_2 = "Nordwind";
         izsmartIdentity.password = "mypasswords";
         this.identities.put("irc.iz-smart.net", izsmartIdentity);

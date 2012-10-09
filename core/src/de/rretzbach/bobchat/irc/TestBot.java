@@ -37,6 +37,8 @@ public class TestBot implements IrcBot {
 
         // channel message types
         onMessage(channel, "TestNick", "TestLogin", hostname, "Veggies sunt bona vobis, proinde vos postulo esse magis arugula kombu soybean bitterleaf water spinach catsear chard daikon beet greens jícama squash wakame seakale silver beet lentil chickweed wattle seed.");
+        onMessage(channel, "TestNick", "TestLogin", hostname, "\u00034red");
+        onMessage(channel, "TestNick", "TestLogin", hostname, "\u00033,0Die richtige Antwort war: \u00032,0 < Thomas Wolfe > \u00032,0");
         onJoin(channel, "Someone", "Someone", hostname);
         onPart(channel, "Someone", "Someone", hostname);
         onAction("Someone", "Someone", hostname, channel, "is feeling well");
