@@ -63,6 +63,7 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
 
     public ChannelViewTopComponent() {
         initComponents();
+        jChatPanel1.setupVerticalScrollbar();
     }
 
     /**

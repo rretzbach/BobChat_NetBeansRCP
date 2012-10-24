@@ -43,7 +43,8 @@ public class Conversation {
         if (!this.listener.contains(listener)) {
             this.listener.add(listener);
             if (!messages.isEmpty()) {
-                for (ChatMessage msg : this.messages) {
+                ArrayList<ChatMessage> messagesCopy = new ArrayList(this.messages);
+                for (ChatMessage msg : messagesCopy) {
                     listener.onMessage(msg);
                 }
             }

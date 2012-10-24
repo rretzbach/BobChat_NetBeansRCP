@@ -37,7 +37,16 @@ public class TestBot implements IrcBot {
 
         // channel message types
         onMessage(channel, "TestNick", "TestLogin", hostname, "Veggies sunt bona vobis, proinde vos postulo esse magis arugula kombu soybean bitterleaf water spinach catsear chard daikon beet greens jícama squash wakame seakale silver beet lentil chickweed wattle seed.");
-        onMessage(channel, "TestNick", "TestLogin", hostname, "\u00034red");
+        
+        
+        repeat(500, new Runnable() {
+
+            @Override
+            public void run() {
+                onMessage(channel, "TestNick", "TestLogin", hostname, "\u00034red");
+            }
+        });
+        
         onMessage(channel, "TestNick", "TestLogin", hostname, "\u00033,0Die richtige Antwort war: \u00032,0 < Thomas Wolfe > \u00032,0");
         onJoin(channel, "Someone", "Someone", hostname);
         onPart(channel, "Someone", "Someone", hostname);
@@ -156,13 +165,13 @@ public class TestBot implements IrcBot {
         }, i);
     }
 
-    private void repeat(int i, final Runnable runnable) {
+    private void repeat(int interval, final Runnable runnable) {
         new Timer().schedule(new TimerTask() {
             @Override
             public void run() {
                 runnable.run();
             }
-        }, new Date(), i);
+        }, new Date(), interval);
     }
 
     @Override

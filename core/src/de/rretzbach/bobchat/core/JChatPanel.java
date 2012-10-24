@@ -7,6 +7,7 @@ package de.rretzbach.bobchat.core;
 import de.rretzbach.bobchat.irc.ChatMessage;
 import de.rretzbach.bobchat.irc.Channel;
 import de.rretzbach.bobchat.irc.ChatMessageListener;
+import java.awt.Adjustable;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -17,6 +18,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +46,7 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
     private Channel channel;
     private Integer rulerPosition = null;
     private ChatMessageRenderer chatMessageRenderer = new ChatMessageRenderer();
+    private Boolean autoscrollToBottom = true;
 
     /**
      * Creates new form JChatPanel2
@@ -125,7 +131,6 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
         gbc.weightx = 1.0;
         add(chatMessageRenderer.renderMessage(), gbc);
 
-
         validate();
     }
 
@@ -191,14 +196,46 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
     public void validate() {
         super.validate();
 
-        // scroll to bottom
-        JScrollBar verticalScrollBar = ((JScrollPane) JChatPanel.this.getParent().getParent()).getVerticalScrollBar();
-        verticalScrollBar.setValue(verticalScrollBar.getMaximum());
+        if (autoscrollToBottom) {
+            JScrollBar verticalScrollBar = ((JScrollPane) JChatPanel.this.getParent().getParent()).getVerticalScrollBar();
+            verticalScrollBar.setValue(verticalScrollBar.getMaximum());
+        }
 
         // store the rightmost element to be used in paintcomponent
         if (getComponentCount() > 0) {
             Component lastElement = getComponent(getComponentCount() - 1);
             JChatPanel.this.rulerPosition = lastElement.getX() - 3 - 1;
         }
+    }
+
+    void setupVerticalScrollbar() {
+        final JScrollBar verticalScrollBar = ((JScrollPane) JChatPanel.this.getParent().getParent()).getVerticalScrollBar();
+        verticalScrollBar.addAdjustmentListener(new AdjustmentListener() {
+
+            @Override
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+                // manually dragging the scrollbar disables autoscroll
+                if (e.getValueIsAdjusting()) {
+                    autoscrollToBottom = false;
+                }
+                
+                // when scolled to bottom enable autoscrolling again
+                if (verticalScrollBar.getMaximum() <= verticalScrollBar.getValue() + verticalScrollBar.getVisibleAmount() + 15) {
+                   autoscrollToBottom = true; 
+                }
+            }
+        });
+        
+        ((JScrollPane) JChatPanel.this.getParent().getParent()).addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                // disable autoscroll on mouse scroll, re-enable when scrolling to bottom
+                if (verticalScrollBar.getMaximum() <= verticalScrollBar.getValue() + verticalScrollBar.getVisibleAmount() + 15) {
+                   autoscrollToBottom = true; 
+                } else {
+                    autoscrollToBottom = false;
+                }
+            }
+        });
     }
 }
