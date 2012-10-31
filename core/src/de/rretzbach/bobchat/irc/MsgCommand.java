@@ -17,7 +17,7 @@ public class MsgCommand extends IrcCommand {
 
     public MsgCommand() {
         keyword = "msg";
-        pattern = Pattern.compile("\\A\\Q" + keyword + "\\E (\\S+) (\\S+)\\z");
+        pattern = Pattern.compile("\\A\\Q" + keyword + "\\E (\\S+) (.+)\\z");
     }
 
     @Override
