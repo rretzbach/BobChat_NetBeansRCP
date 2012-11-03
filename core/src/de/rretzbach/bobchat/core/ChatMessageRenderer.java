@@ -7,21 +7,20 @@ package de.rretzbach.bobchat.core;
 import de.rretzbach.bobchat.irc.ChatMessage;
 import java.awt.Color;
 import java.awt.Component;
+import java.net.URL;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.swing.JLabel;
-import javax.swing.JTextPane;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DateFormatter;
-import javax.swing.text.Document;
+import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
-import javax.swing.text.StyleContext.NamedStyle;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.html.HTML;
 import org.openide.util.Exceptions;
 
 /**
@@ -57,22 +56,22 @@ public class ChatMessageRenderer {
         Color teal = new Color(0, 128, 128);
         Color brown = new Color(128, 0, 0);
         Color purple = new Color(128, 0, 128);
-        Color white = new Color(255,255,255,0);
+        Color white = new Color(255, 255, 255, 0);
         Color orange = new Color(200, 128, 0);
 
-        
+
         Color[] colors = {white, Color.BLACK, navy, green, Color.RED, brown, purple, orange, Color.YELLOW, Color.GREEN, teal, Color.CYAN, Color.BLUE, Color.PINK, Color.GRAY, Color.LIGHT_GRAY};
-        
-        
-        
+
+
+
         try {
             List<Runnable> styles = new ArrayList<Runnable>();
             final StringBuilder sb = new StringBuilder();
             String[] split = tokenize(message.message);
             if (message.message.contains("red")) {
-            System.out.println(split);
+                System.out.println(split);
             }
-            
+
             for (String token : split) {
                 if (token.startsWith("\u0003")) {
                     Integer fg = null, bg = null;
@@ -84,9 +83,9 @@ public class ChatMessageRenderer {
                     } else {
                         fg = Integer.parseInt(token.substring(1));
                     }
-                        System.out.println("fg " + fg);
-                            System.out.println("bg " + bg);
-                    
+                    System.out.println("fg " + fg);
+                    System.out.println("bg " + bg);
+
                     String styleName = fg + "," + (bg == null ? "null" : bg);
                     Style newStyle = doc.getStyle(styleName);
                     if (newStyle == null) {
@@ -104,7 +103,7 @@ public class ChatMessageRenderer {
                             doc.setCharacterAttributes(len, message.message.length(), style, false);
                         }
                     });
-                    
+
                 } else {
                     sb.append(token);
                 }
@@ -113,6 +112,22 @@ public class ChatMessageRenderer {
             for (Runnable runnable : styles) {
                 runnable.run();
             }
+
+            // highlight urls
+            String plaintext = doc.getText(0, doc.getLength());
+            Pattern urlPattern = Pattern.compile("(((http|ftp|https):\\/\\/)|www\\.)?[\\w\\-_]+(\\.[\\w\\-_]{2,})*\\.[\\w\\-_]{2,4}(\\b|[?/#])\\S*");
+            Matcher matcher = urlPattern.matcher(plaintext);
+            while (matcher.find()) {
+                int begin = matcher.start();
+                String url = matcher.group();
+                SimpleAttributeSet attrs = new SimpleAttributeSet();
+                attrs.addAttribute(HTML.Attribute.HREF, url);
+                doc.setCharacterAttributes(begin, url.length(), attrs, true);
+            }
+
+
+
+
         } catch (BadLocationException ex) {
             Exceptions.printStackTrace(ex);
         }
@@ -122,14 +137,14 @@ public class ChatMessageRenderer {
 
     private String[] tokenize(String input) {
         List<String> result = new ArrayList<String>();
-        
+
         Matcher matcher = Pattern.compile("\u0003\\d\\d?(?:,\\d\\d?)?|[^\u0003]+").matcher(input);
         while (matcher.find()) {
             result.add(matcher.group());
         }
-        
+
         System.out.println(result);
-        
+
         String[] arr = new String[result.size()];
         return result.toArray(arr);
     }

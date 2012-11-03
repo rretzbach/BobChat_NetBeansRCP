@@ -12,6 +12,7 @@ import de.rretzbach.bobchat.irc.Conversation;
 import de.rretzbach.bobchat.irc.ConversationEstablishedAction;
 import de.rretzbach.bobchat.irc.IrcMessageListener;
 import de.rretzbach.bobchat.irc.Network;
+import de.rretzbach.bobchat.irc.NickChangeListener;
 import de.rretzbach.bobchat.irc.Query;
 import de.rretzbach.bobchat.irc.Router;
 import de.rretzbach.bobchat.util.ChannelListAction;
@@ -145,6 +146,14 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
             Query query = network.getQuery(getName());
             conversation = query;
         }
+        conversation.getNetwork().addNickChangeListener(new NickChangeListener() {
+
+            @Override
+            public void onNickChange(String oldNick, String login, String hostname, String newNick) {
+                jLabel1.setText(newNick);
+            }
+        
+        });
         jLabel1.setText(conversation.getNetwork().getNick());
         
         setConversation(conversation);

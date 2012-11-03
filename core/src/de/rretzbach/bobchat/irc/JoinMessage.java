@@ -3,7 +3,7 @@ package de.rretzbach.bobchat.irc;
 import java.util.Date;
 
 /**
- *
+ * 
  * @author rretzbach
  */
 public class JoinMessage extends ChatMessage {

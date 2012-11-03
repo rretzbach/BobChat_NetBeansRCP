@@ -6,7 +6,10 @@ package de.rretzbach.bobchat.util;
 
 import de.rretzbach.bobchat.core.ChannelListTopComponent;
 import de.rretzbach.bobchat.core.ChannelViewTopComponent;
+import de.rretzbach.bobchat.core.NickListTopComponent;
 import de.rretzbach.bobchat.irc.Conversation;
+import de.rretzbach.bobchat.irc.Router;
+import javax.swing.SwingUtilities;
 import org.openide.windows.Mode;
 import org.openide.windows.TopComponent;
 import org.openide.windows.WindowManager;
@@ -33,7 +36,7 @@ public class WindowUtil {
             }
         });
     }
-    
+
     public static void executeChannelViewAction(final ChannelViewAction action) {
         WindowManager.getDefault().invokeWhenUIReady(new Runnable() {
             @Override
@@ -63,21 +66,27 @@ public class WindowUtil {
             comp.registerComponent();
         }
         comp.requestActive();
-
     }
 
-    public static void openConversationWindow(String hostname, Conversation conversation) {
-        ChannelViewTopComponent comp = findConversationWindow(hostname, conversation.getName());
+    public static void openConversationWindow(final String hostname, final Conversation conversation) {
+        final ChannelViewTopComponent comp = findConversationWindow(hostname, conversation.getName());
         if (comp == null) {
-            System.out.println("open new window for " + hostname + " " + conversation.getName());
-            comp = new ChannelViewTopComponent();
-            comp.setHostname(hostname);
-            comp.setConversation(conversation);
-            Mode myMode = WindowManager.getDefault().findMode("editor");
-            myMode.dockInto(comp);
-            comp.open();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    System.out.println("open new window for " + hostname + " " + conversation.getName());
+                    ChannelViewTopComponent comp = new ChannelViewTopComponent();
+                    comp.setHostname(hostname);
+                    comp.setConversation(conversation);
+                    Mode myMode = WindowManager.getDefault().findMode("editor");
+                    myMode.dockInto(comp);
+                    comp.open();
+                    comp.requestAttention(false);
+                }
+            });
+        } else {
+            comp.requestAttention(true);
         }
-        comp.requestActive();
     }
 
     private static ChannelViewTopComponent findConversationWindow(String hostname, String name) {

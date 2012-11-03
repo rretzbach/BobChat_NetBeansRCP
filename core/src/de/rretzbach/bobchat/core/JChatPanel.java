@@ -211,27 +211,26 @@ public class JChatPanel extends javax.swing.JPanel implements ChatMessageListene
     void setupVerticalScrollbar() {
         final JScrollBar verticalScrollBar = ((JScrollPane) JChatPanel.this.getParent().getParent()).getVerticalScrollBar();
         verticalScrollBar.addAdjustmentListener(new AdjustmentListener() {
-
             @Override
             public void adjustmentValueChanged(AdjustmentEvent e) {
                 // manually dragging the scrollbar disables autoscroll
                 if (e.getValueIsAdjusting()) {
                     autoscrollToBottom = false;
                 }
-                
+
                 // when scolled to bottom enable autoscrolling again
                 if (verticalScrollBar.getMaximum() <= verticalScrollBar.getValue() + verticalScrollBar.getVisibleAmount() + 15) {
-                   autoscrollToBottom = true; 
+                    autoscrollToBottom = true;
                 }
             }
         });
-        
+
         ((JScrollPane) JChatPanel.this.getParent().getParent()).addMouseWheelListener(new MouseWheelListener() {
             @Override
             public void mouseWheelMoved(MouseWheelEvent e) {
                 // disable autoscroll on mouse scroll, re-enable when scrolling to bottom
                 if (verticalScrollBar.getMaximum() <= verticalScrollBar.getValue() + verticalScrollBar.getVisibleAmount() + 15) {
-                   autoscrollToBottom = true; 
+                    autoscrollToBottom = true;
                 } else {
                     autoscrollToBottom = false;
                 }

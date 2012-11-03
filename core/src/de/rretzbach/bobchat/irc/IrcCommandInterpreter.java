@@ -17,6 +17,9 @@ public class IrcCommandInterpreter {
     
     private IrcCommandInterpreter() {
         commands.add(new MsgCommand());
+        commands.add(new NickChangeCommand());
+        commands.add(new ActionCommand());
+        commands.add(new NicklistCommand());
     }
     
     public static IrcCommandInterpreter get() {

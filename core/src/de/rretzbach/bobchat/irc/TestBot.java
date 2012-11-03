@@ -12,6 +12,7 @@ import java.util.TimerTask;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
+import org.jibble.pircbot.User;
 import org.openide.util.Exceptions;
 
 /**
@@ -39,13 +40,15 @@ public class TestBot implements IrcBot {
         onMessage(channel, "TestNick", "TestLogin", hostname, "Veggies sunt bona vobis, proinde vos postulo esse magis arugula kombu soybean bitterleaf water spinach catsear chard daikon beet greens jícama squash wakame seakale silver beet lentil chickweed wattle seed.");
         
         
-        repeat(500, new Runnable() {
+//        repeat(500, new Runnable() {
+//
+//            @Override
+//            public void run() {
+//                onMessage(channel, "TestNick", "TestLogin", hostname, "\u00034red");
+//            }
+//        });
 
-            @Override
-            public void run() {
-                onMessage(channel, "TestNick", "TestLogin", hostname, "\u00034red");
-            }
-        });
+        onMessage(channel, "TestNick", "TestLogin", hostname, "http://imgur.com/a/AW4Os this");
         
         onMessage(channel, "TestNick", "TestLogin", hostname, "\u00033,0Die richtige Antwort war: \u00032,0 < Thomas Wolfe > \u00032,0");
         onJoin(channel, "Someone", "Someone", hostname);
@@ -178,4 +181,16 @@ public class TestBot implements IrcBot {
     public void connect(String hostname, int port, String password) throws IOException, IrcException, NickAlreadyInUseException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    @Override
+    public void onNickChange(String oldNick, String login, String hostname, String newNick) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void onUserList(String channel, User[] users) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
+    
 }

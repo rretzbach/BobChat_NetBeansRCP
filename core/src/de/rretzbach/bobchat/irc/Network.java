@@ -9,10 +9,14 @@ import java.awt.Window;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import javax.swing.SwingUtilities;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
+import org.jibble.pircbot.User;
 import org.openide.util.Exceptions;
 
 /**
@@ -22,6 +26,7 @@ import org.openide.util.Exceptions;
 public class Network implements IrcConnectionListener, IrcMessageListener, IrcConnection {
 
     protected List<Conversation> conversations = new ArrayList<Conversation>();
+    private List<NickChangeListener> nickChangeListeners = new LinkedList<NickChangeListener>();
 
     public List<Conversation> getConversations() {
         return conversations;
@@ -37,11 +42,17 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     public Network(Identity identity, String hostname) {
         this.identity = identity;
         this.hostname = hostname;
+        
         // exchange implementations by using either TestBot or MainBot
-        this.bot = new MainBot(identity) {
+        this.bot = new TestBot(identity) {
             @Override
             public void onConnect() {
                 Network.this.onConnect();
+            }
+
+            @Override
+            public void onDisconnect() {
+                Network.this.onDisconnect();
             }
 
             @Override
@@ -73,16 +84,35 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
             public void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) {
                 Network.this.onNotice(sourceNick, sourceLogin, sourceHostname, target, notice);
             }
+
+            @Override
+            public void onNickChange(String oldNick, String login, String hostname, String newNick) {
+                Network.this.onNickChange(oldNick, login, hostname, newNick);
+            }
+
+            @Override
+            public void onUserList(String channel, User[] users) {
+                Network.this.onUserList(channel, users);
+            }
         };
     }
 
     @Override
     public void onConnect() {
         status = Status.CONNECTED;
+        
+        sendAnyMessage("NickServ", "identify " + identity.password);
+        
         final Iterator<Runnable> it = connectActions.iterator();
         while (it.hasNext()) {
             it.next().run();
             it.remove();
+        }
+        
+        for (Conversation conv: conversations) {
+            if (conv instanceof Channel) {
+                joinChannel(conv.getName());
+            }
         }
     }
 
@@ -93,7 +123,28 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
 
     @Override
     public void onDisconnect() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        try {
+            status = Status.DISCONNECTED;
+            System.out.println("Attempting reconnect");
+            connect(hostname);
+        } catch (IOException ex) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Thread.sleep(5000);
+                        onDisconnect();
+                    } catch (InterruptedException ex1) {
+                        Exceptions.printStackTrace(ex1);
+                    }
+                }
+            }).start();
+            Exceptions.printStackTrace(ex);
+        } catch (NickAlreadyInUseException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (IrcException ex) {
+            Exceptions.printStackTrace(ex);
+        } 
     }
 
     @Override
@@ -159,12 +210,9 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
 
     @Override
     public void onPrivateMessage(final String sender, final String login, final String hostname, final String message) {
-        Query query = findQueryByName(sender);
-        if (query == null) {
-            query = getQuery(sender);
-            WindowUtil.openConversationWindow(hostname, query);
-        }
+        Query query = getQuery(sender);
         query.addMessage(new PrivateMessage(sender, message));
+        WindowUtil.openConversationWindow(hostname, query);
     }
 
     public String getHostname() {
@@ -178,7 +226,7 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
 
     @Override
     public void changeNick(String newNick) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        bot.changeNick(newNick);
     }
 
     @Override
@@ -214,14 +262,15 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
 
     @Override
     public void sendAction(String target, String action) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        onAction(bot.getNick(), bot.getNick(), hostname, target, action);
+        bot.sendAction(target, action);
     }
 
     @Override
     public void sendMessage(String target, String message) {
         System.out.println("Sending message "+target+" to "+message);
         onMessage(target, bot.getNick(), bot.getNick(), hostname, message);
-        bot.sendMessage(target, message);
+        bot.sendMessage(target, message); 
     }
 
     @Override
@@ -337,8 +386,9 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     }
 
     void sendQueryMessage(String name, String message) {
-        Query findQueryByName = findQueryByName(name);
-        findQueryByName.addMessage(new PrivateMessage(bot.getNick(), message));
+        Query query = getQuery(name);
+        WindowUtil.openConversationWindow(hostname, query);
+        query.addMessage(new PrivateMessage(bot.getNick(), message));
         bot.sendMessage(name, message);
     }
 
@@ -396,6 +446,43 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
         } else {
             sendQueryMessage(target, message);
         }
+    }
+
+    @Override
+    public void onNickChange(String oldNick, String login, String hostname, String newNick) {
+        if (oldNick.equals(bot.getNick()) || newNick.equals(bot.getNick())) {
+            for (NickChangeListener listener : this.nickChangeListeners) {
+                listener.onNickChange(oldNick, login, hostname, newNick);
+            }
+            // TODO display own nickchange
+        } else {
+            // TODO nickchange for other ppl
+        }
+    }
+
+    public void addNickChangeListener(NickChangeListener nickChangeListener) {
+        this.nickChangeListeners.add(nickChangeListener);
+    }
+
+    void sendAnyAction(String target, String message) {
+        if (target.startsWith("#")) {
+            sendAction(target, message);
+        } else {
+            sendQueryAction(target, message);
+        }
+    }
+
+    private void sendQueryAction(String name, String action) {
+        Query findQueryByName = findQueryByName(name);
+        findQueryByName.addMessage(new ActionMessage(bot.getNick(), action));
+        bot.sendAction(name, action);
+    }
+
+    @Override
+    public void onUserList(String channel, User[] users) {
+        ArrayList<User> userlist = new ArrayList<User>();
+        Collections.addAll(userlist, users);
+        getChannel(channel).setUsers(userlist);
     }
 
     public enum Status {
