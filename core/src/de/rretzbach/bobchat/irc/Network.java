@@ -10,13 +10,13 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import javax.swing.SwingUtilities;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
-import org.jibble.pircbot.User;
 import org.openide.util.Exceptions;
 
 /**
@@ -91,9 +91,16 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
             }
 
             @Override
-            public void onUserList(String channel, User[] users) {
-                Network.this.onUserList(channel, users);
+            public void onUsernameList(String channel, List<User> users) {
+                Network.this.onUsernameList(channel, users);
             }
+
+            @Override
+            public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
+                Network.this.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
+            }
+            
+            
         };
     }
 
@@ -479,10 +486,22 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     }
 
     @Override
-    public void onUserList(String channel, User[] users) {
-        ArrayList<User> userlist = new ArrayList<User>();
-        Collections.addAll(userlist, users);
-        getChannel(channel).setUsers(userlist);
+    public void onUsernameList(String channel, List<User> users) {
+        getChannel(channel).setUsers(users);
+    }
+
+    @Override
+    public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
+        addNickMessage(sourceNick, new ChatMessage(new Date(), "<--", sourceNick + " has quit ("+reason+")"));
+    }
+
+    private void addNickMessage(String nick, ChatMessage chatMessage) {
+        for (Conversation conversation : conversations) {
+            System.out.println("###################################" +((Channel)conversation).getUsers());
+            if (conversation instanceof Channel && ((Channel)conversation).getUsers().contains(new User("", nick))) {
+                conversation.addMessage(chatMessage);
+            }
+        }
     }
 
     public enum Status {

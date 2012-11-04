@@ -5,6 +5,8 @@
 package de.rretzbach.bobchat.irc;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.jibble.pircbot.PircBot;
@@ -88,6 +90,22 @@ public class MainBot extends PircBot implements IrcBot {
 
     @Override
     public void onUserList(String channel, User[] users) {
-        super.onUserList(channel, users);
+        List<de.rretzbach.bobchat.irc.User> usernames = new ArrayList<de.rretzbach.bobchat.irc.User>(users.length);
+        for (User user : users) {
+            usernames.add(new de.rretzbach.bobchat.irc.User(user.getPrefix(), user.getNick()));
+         }
+        onUsernameList(channel, usernames);
     }
+
+    @Override
+    public void onUsernameList(String channel, List<de.rretzbach.bobchat.irc.User> users) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
+        super.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
+    }
+    
+    
 }

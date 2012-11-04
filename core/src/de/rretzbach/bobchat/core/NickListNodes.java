@@ -6,8 +6,8 @@ package de.rretzbach.bobchat.core;
 
 import de.rretzbach.bobchat.irc.Channel;
 import de.rretzbach.bobchat.irc.Router;
+import de.rretzbach.bobchat.irc.User;
 import java.util.List;
-import org.jibble.pircbot.User;
 import org.openide.nodes.Children;
 import org.openide.nodes.Node;
 

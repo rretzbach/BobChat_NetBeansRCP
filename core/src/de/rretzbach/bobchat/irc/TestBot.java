@@ -6,13 +6,15 @@ package de.rretzbach.bobchat.irc;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.jibble.pircbot.PircBot;
-import org.jibble.pircbot.User;
 import org.openide.util.Exceptions;
 
 /**
@@ -55,6 +57,12 @@ public class TestBot implements IrcBot {
         onPart(channel, "Someone", "Someone", hostname);
         onAction("Someone", "Someone", hostname, channel, "is feeling well");
         onNotice("Someone", "Someone", hostname, channel, "this is a notice");
+        
+        ArrayList<User> arrayList = new ArrayList<User>();
+        arrayList.add(new User("@", "Someone"));
+        onUsernameList(channel, arrayList);
+        
+        onQuit("Someone", "Someone", hostname, "needs some fresh air");
         
         // query message types
         onPrivateMessage("Someone", "Someone", hostname, "hi");
@@ -188,9 +196,12 @@ public class TestBot implements IrcBot {
     }
 
     @Override
-    public void onUserList(String channel, User[] users) {
+    public void onUsernameList(String channel, List<User> users) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
     
-    
+    @Override
+    public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
 }

@@ -2,12 +2,12 @@ package de.rretzbach.bobchat.irc;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
-import org.jibble.pircbot.User;
 
 /**
- *
+ * TODO remove dependencies to pirc
  * @author rretzbach
  */
 public interface IrcConnection {
@@ -16,7 +16,7 @@ public interface IrcConnection {
     
     void onNickChange(String oldNick, String login, String hostname, String newNick);
     
-    void onUserList(String channel, User[] users);
+    void onUsernameList(String channel, List<User> users);
 
     void connect(String hostname) throws IOException, IrcException, NickAlreadyInUseException;
     
@@ -29,6 +29,8 @@ public interface IrcConnection {
     void joinChannel(String channel);
 
     void partChannel(String channel);
+    
+    void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason);
 
     void quitServer();
 
