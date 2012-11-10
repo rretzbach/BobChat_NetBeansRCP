@@ -4,9 +4,9 @@
  */
 package de.rretzbach.bobchat.core;
 
-import de.rretzbach.bobchat.irc.ChatMessage;
+import de.rretzbach.bobchat.irc.message.ChatMessage;
 import de.rretzbach.bobchat.irc.Channel;
-import de.rretzbach.bobchat.irc.ChatMessageListener;
+import de.rretzbach.bobchat.irc.message.ChatMessageListener;
 import java.awt.Adjustable;
 import java.awt.Color;
 import java.awt.Component;

@@ -1,7 +1,7 @@
 package de.rretzbach.bobchat.irc;
 
+import de.rretzbach.bobchat.irc.util.NetworkListener;
 import de.rretzbach.bobchat.core.Config;
-import de.rretzbach.bobchat.core.NetworkListener;
 import de.rretzbach.bobchat.core.NetworkTreeNodes;
 import java.util.ArrayList;
 import java.util.Collections;

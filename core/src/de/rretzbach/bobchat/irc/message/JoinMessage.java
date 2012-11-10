@@ -1,4 +1,4 @@
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.message;
 
 import java.util.Date;
 

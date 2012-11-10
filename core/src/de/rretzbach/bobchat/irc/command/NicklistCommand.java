@@ -2,8 +2,12 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.command;
 
+import de.rretzbach.bobchat.irc.Channel;
+import de.rretzbach.bobchat.irc.message.ChatMessage;
+import de.rretzbach.bobchat.irc.Conversation;
+import de.rretzbach.bobchat.irc.User;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

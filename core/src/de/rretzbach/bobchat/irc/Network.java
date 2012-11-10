@@ -1,20 +1,23 @@
 package de.rretzbach.bobchat.irc;
 
-import de.rretzbach.bobchat.core.ChannelListTopComponent;
-import de.rretzbach.bobchat.core.ConversationListener;
+import de.rretzbach.bobchat.irc.util.IrcConnection;
+import de.rretzbach.bobchat.irc.util.NickChangeListener;
+import de.rretzbach.bobchat.irc.util.IrcConnectionListener;
+import de.rretzbach.bobchat.irc.util.IrcMessageListener;
+import de.rretzbach.bobchat.irc.util.ConversationListener;
+import de.rretzbach.bobchat.irc.util.ConversationEstablishedAction;
+import de.rretzbach.bobchat.irc.message.ActionMessage;
+import de.rretzbach.bobchat.irc.message.PrivateMessage;
+import de.rretzbach.bobchat.irc.message.ChatMessage;
 import de.rretzbach.bobchat.core.ConversationTreeNodes;
-import de.rretzbach.bobchat.util.ChannelListAction;
-import de.rretzbach.bobchat.util.WindowUtil;
-import java.awt.Window;
+import de.rretzbach.bobchat.core.util.WindowUtil;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import javax.swing.SwingUtilities;
 import org.jibble.pircbot.IrcException;
 import org.jibble.pircbot.NickAlreadyInUseException;
 import org.openide.util.Exceptions;
@@ -42,9 +45,9 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     public Network(Identity identity, String hostname) {
         this.identity = identity;
         this.hostname = hostname;
-        
+
         // exchange implementations by using either TestBot or MainBot
-        this.bot = new TestBot(identity) {
+        this.bot = new MainBot(identity) {
             @Override
             public void onConnect() {
                 Network.this.onConnect();
@@ -99,24 +102,23 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
             public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
                 Network.this.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
             }
-            
-            
         };
     }
 
     @Override
     public void onConnect() {
         status = Status.CONNECTED;
-        
+
         sendAnyMessage("NickServ", "identify " + identity.password);
-        
+
         final Iterator<Runnable> it = connectActions.iterator();
         while (it.hasNext()) {
             it.next().run();
             it.remove();
         }
-        
-        for (Conversation conv: conversations) {
+
+        // TODO don't execute on EDT
+        for (Conversation conv : conversations) {
             if (conv instanceof Channel) {
                 joinChannel(conv.getName());
             }
@@ -130,28 +132,9 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
 
     @Override
     public void onDisconnect() {
-        try {
-            status = Status.DISCONNECTED;
-            System.out.println("Attempting reconnect");
-            connect(hostname);
-        } catch (IOException ex) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(5000);
-                        onDisconnect();
-                    } catch (InterruptedException ex1) {
-                        Exceptions.printStackTrace(ex1);
-                    }
-                }
-            }).start();
-            Exceptions.printStackTrace(ex);
-        } catch (NickAlreadyInUseException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (IrcException ex) {
-            Exceptions.printStackTrace(ex);
-        } 
+        status = Status.DISCONNECTED;
+        reconnectUntilConnected();
+
     }
 
     @Override
@@ -275,9 +258,9 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
 
     @Override
     public void sendMessage(String target, String message) {
-        System.out.println("Sending message "+target+" to "+message);
+        System.out.println("Sending message " + target + " to " + message);
         onMessage(target, bot.getNick(), bot.getNick(), hostname, message);
-        bot.sendMessage(target, message); 
+        bot.sendMessage(target, message);
     }
 
     @Override
@@ -442,12 +425,12 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     }
 
     private void fireAddConversation(Conversation conversation) {
-        for (ConversationListener listener: this.listener) {
+        for (ConversationListener listener : this.listener) {
             listener.addedConversation(conversation);
         }
     }
 
-    void sendAnyMessage(String target, String message) {
+    public void sendAnyMessage(String target, String message) {
         if (target.startsWith("#")) {
             sendMessage(target, message);
         } else {
@@ -471,7 +454,7 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
         this.nickChangeListeners.add(nickChangeListener);
     }
 
-    void sendAnyAction(String target, String message) {
+    public void sendAnyAction(String target, String message) {
         if (target.startsWith("#")) {
             sendAction(target, message);
         } else {
@@ -486,25 +469,52 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     }
 
     @Override
+    // TODO don't execute on EDT
     public void onUsernameList(String channel, List<User> users) {
         getChannel(channel).setUsers(users);
     }
 
     @Override
     public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-        addNickMessage(sourceNick, new ChatMessage(new Date(), "<--", sourceNick + " has quit ("+reason+")"));
+        addNickMessage(sourceNick, new ChatMessage(new Date(), "<--", sourceNick + " has quit (" + reason + ")"));
     }
 
     private void addNickMessage(String nick, ChatMessage chatMessage) {
         for (Conversation conversation : conversations) {
-            System.out.println("###################################" +((Channel)conversation).getUsers());
-            if (conversation instanceof Channel && ((Channel)conversation).getUsers().contains(new User("", nick))) {
+            if (conversation instanceof Channel && ((Channel) conversation).getUsers().contains(new User("", nick))) {
                 conversation.addMessage(chatMessage);
             }
         }
     }
 
+    private void reconnectUntilConnected() {
+        try {
+            System.out.println("Attempting reconnect");
+            connect(hostname);
+        } catch (IOException ex) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (status != Status.CONNECTED || status != Status.CONNECTING) {
+                            Thread.sleep(5000);
+                            reconnectUntilConnected();
+                        }
+                    } catch (InterruptedException ex1) {
+                        Exceptions.printStackTrace(ex1);
+                    }
+                }
+            }).start();
+            Exceptions.printStackTrace(ex);
+        } catch (NickAlreadyInUseException ex) {
+            Exceptions.printStackTrace(ex);
+        } catch (IrcException ex) {
+            Exceptions.printStackTrace(ex);
+        }
+    }
+
     public enum Status {
+
         DISCONNECTED, CONNECTING, CONNECTED
     }
 }

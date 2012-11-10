@@ -1,5 +1,7 @@
 package de.rretzbach.bobchat.irc;
 
+import de.rretzbach.bobchat.irc.message.PartMessage;
+import de.rretzbach.bobchat.irc.message.JoinMessage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;

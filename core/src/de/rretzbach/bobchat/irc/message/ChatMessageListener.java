@@ -1,4 +1,6 @@
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.message;
+
+import de.rretzbach.bobchat.irc.message.ChatMessage;
 
 /**
  *

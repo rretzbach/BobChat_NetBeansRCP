@@ -4,7 +4,7 @@
  */
 package de.rretzbach.bobchat.core;
 
-import de.rretzbach.bobchat.irc.ChatMessage;
+import de.rretzbach.bobchat.irc.message.ChatMessage;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;

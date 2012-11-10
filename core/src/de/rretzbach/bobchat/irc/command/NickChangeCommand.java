@@ -2,8 +2,10 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.command;
 
+import de.rretzbach.bobchat.irc.Conversation;
+import de.rretzbach.bobchat.irc.Network;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

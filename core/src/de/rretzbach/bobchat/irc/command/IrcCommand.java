@@ -1,5 +1,6 @@
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.command;
 
+import de.rretzbach.bobchat.irc.Conversation;
 import java.util.regex.Pattern;
 
 /**

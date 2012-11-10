@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.message;
 
 import java.util.Date;
 

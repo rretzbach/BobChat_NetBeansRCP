@@ -4,10 +4,11 @@
  */
 package de.rretzbach.bobchat.core;
 
+import de.rretzbach.bobchat.irc.util.NetworkListener;
 import de.rretzbach.bobchat.irc.Conversation;
 import de.rretzbach.bobchat.irc.Network;
 import de.rretzbach.bobchat.irc.Router;
-import de.rretzbach.bobchat.util.WindowUtil;
+import de.rretzbach.bobchat.core.util.WindowUtil;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;

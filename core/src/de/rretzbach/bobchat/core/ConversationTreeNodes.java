@@ -4,6 +4,7 @@
  */
 package de.rretzbach.bobchat.core;
 
+import de.rretzbach.bobchat.irc.util.ConversationListener;
 import de.rretzbach.bobchat.irc.Conversation;
 import de.rretzbach.bobchat.irc.Network;
 import org.openide.nodes.AbstractNode;

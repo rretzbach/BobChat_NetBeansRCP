@@ -4,8 +4,8 @@
  */
 package de.rretzbach.bobchat.core;
 
-import de.rretzbach.bobchat.util.ChannelViewAction;
-import de.rretzbach.bobchat.util.WindowUtil;
+import de.rretzbach.bobchat.core.util.ChannelViewAction;
+import de.rretzbach.bobchat.core.util.WindowUtil;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import org.openide.modules.ModuleInstall;

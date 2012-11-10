@@ -1,5 +1,6 @@
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.util;
 
+import de.rretzbach.bobchat.irc.User;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;

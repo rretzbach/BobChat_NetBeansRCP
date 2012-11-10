@@ -2,21 +2,24 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package de.rretzbach.bobchat.irc;
+package de.rretzbach.bobchat.irc.command;
 
+import de.rretzbach.bobchat.irc.Conversation;
+import de.rretzbach.bobchat.irc.Network;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * TODO implement this
+ *
  * @author rretzbach
  */
-public class ActionCommand extends IrcCommand {
-    private String action;
+public class MsgCommand extends IrcCommand {
+    private String target;
+    private String message;
 
-    public ActionCommand() {
-        keyword = "me";
-        pattern = Pattern.compile("\\A\\Q" + keyword + "\\E (.+)\\z");
+    public MsgCommand() {
+        keyword = "msg";
+        pattern = Pattern.compile("\\A\\Q" + keyword + "\\E (\\S+) (.+)\\z");
     }
 
     @Override
@@ -34,11 +37,12 @@ public class ActionCommand extends IrcCommand {
             return;
         }
         
-        action = matcher.group(1);
+        target = matcher.group(1);
+        message= matcher.group(2);
         
         Network network = conversation.getNetwork();
         
-        network.sendAnyAction(conversation.getName(), action);
+        network.sendAnyMessage(target, message);
     }
     
 }

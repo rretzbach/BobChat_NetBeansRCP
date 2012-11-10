@@ -5,28 +5,30 @@
 package de.rretzbach.bobchat.core;
 
 import de.rretzbach.bobchat.irc.Channel;
-import de.rretzbach.bobchat.irc.ChatMessage;
-import de.rretzbach.bobchat.irc.ChatMessageListener;
+import de.rretzbach.bobchat.irc.message.ChatMessage;
+import de.rretzbach.bobchat.irc.message.ChatMessageListener;
 import de.rretzbach.bobchat.irc.Console;
 import de.rretzbach.bobchat.irc.Conversation;
-import de.rretzbach.bobchat.irc.ConversationEstablishedAction;
-import de.rretzbach.bobchat.irc.IrcMessageListener;
+import de.rretzbach.bobchat.irc.util.ConversationEstablishedAction;
+import de.rretzbach.bobchat.irc.util.IrcMessageListener;
 import de.rretzbach.bobchat.irc.Network;
-import de.rretzbach.bobchat.irc.NickChangeListener;
+import de.rretzbach.bobchat.irc.util.NickChangeListener;
 import de.rretzbach.bobchat.irc.Query;
 import de.rretzbach.bobchat.irc.Router;
-import de.rretzbach.bobchat.util.ChannelListAction;
-import de.rretzbach.bobchat.util.WindowUtil;
+import de.rretzbach.bobchat.core.util.ChannelListAction;
+import de.rretzbach.bobchat.core.util.WindowUtil;
 import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.Date;
+import javax.naming.event.EventDirContext;
 import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import oracle.jrockit.jfr.openmbean.EventDefaultType;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
 import org.netbeans.api.settings.ConvertAsProperties;
@@ -131,32 +133,40 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
     @Override
     public void componentOpened() {
         System.out.println("opening window " + getName());
-        
-    }
-    
-    public void registerComponent() {
-        System.out.println("registering window " + getName());
-        final Network network = Router.get().getNetwork(hostname);
-        
-        Conversation conversation = null;
-        if (this.type.equals("channel")) {
-            Channel channel = network.getChannel(getName());
-            conversation = channel;
-        } else if (this.type.equals("query")) {
-            Query query = network.getQuery(getName());
-            conversation = query;
-        }
-        conversation.getNetwork().addNickChangeListener(new NickChangeListener() {
 
+    }
+
+    public void registerComponent() {
+        Runnable linkWindowToModel = new Runnable() {
             @Override
-            public void onNickChange(String oldNick, String login, String hostname, String newNick) {
-                jLabel1.setText(newNick);
+            public void run() {
+                System.out.println("registering window " + getName());
+                final Network network = Router.get().getNetwork(hostname);
+
+                Conversation conversation = null;
+                if (type.equals("channel")) {
+                    Channel channel = network.getChannel(getName());
+                    conversation = channel;
+                } else if (type.equals("query")) {
+                    Query query = network.getQuery(getName());
+                    conversation = query;
+                }
+                conversation.getNetwork().addNickChangeListener(new NickChangeListener() {
+                    @Override
+                    public void onNickChange(String oldNick, String login, String hostname, String newNick) {
+                        jLabel1.setText(newNick);
+                    }
+                });
+                jLabel1.setText(conversation.getNetwork().getNick());
+
+                setConversation(conversation);
             }
-        
-        });
-        jLabel1.setText(conversation.getNetwork().getNick());
-        
-        setConversation(conversation);
+        };
+        if (SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(linkWindowToModel);
+        } else {
+            linkWindowToModel.run();
+        }
     }
 
     @Override
