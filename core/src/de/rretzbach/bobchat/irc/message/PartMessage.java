@@ -9,10 +9,10 @@ import java.util.Date;
 public class PartMessage extends ChatMessage {
 
     public PartMessage(Date timestamp, String nick, String channel) {
-        super(timestamp, "<--", nick + " hat " + channel + " verlassen");
+        super(timestamp, "<--", nick + " has left " + channel);
     }
 
     public PartMessage(Date timestamp, String channel) {
-        super(timestamp, "<--", "Sie haben Kanal " + channel + " verlassen");
+        super(timestamp, "<--", "You have left " + channel);
     }
 }

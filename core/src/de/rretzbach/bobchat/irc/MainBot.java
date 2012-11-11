@@ -18,54 +18,59 @@ import org.openide.util.Exceptions;
  * @author rretzbach
  */
 public class MainBot extends PircBot implements IrcBot {
+    private final String hostname;
+    private IrcBotDelegate delegate;
 
-    public MainBot(Identity identity) {
+    public MainBot(Identity identity, String hostname) {
+        this.hostname = hostname;
         setName(identity.nick);
         try {
             setEncoding("UTF-8");
         } catch (UnsupportedEncodingException ex) {
             Exceptions.printStackTrace(ex);
         }
+        setLogin(identity.nick);
+        setVersion("BobChat 1.0 alpha Java IRC client - " + "https://github.com/rretzbach/BobChat");
     }
 
     @Override
     public void onPart(String channel, String sender, String login, String hostname) {
-        System.out.println("Part Event: channel=" + channel + ",sender=" + sender + ",login=" + login + ",hostname=" + hostname);
+        delegate.onPart(channel, sender, login, hostname);
     }
 
     @Override
     public void onJoin(String channel, String sender, String login, String hostname) {
-        System.out.println("Join Event: channel=" + channel + ",sender=" + sender + ",login=" + login + ",hostname=" + hostname);
+        delegate.onJoin(channel, sender, login, hostname);
     }
 
     @Override
     public void onDisconnect() {
-        System.out.println("Disconnect Event");
+        delegate.onDisconnect();
     }
 
     @Override
     public void onConnect() {
-        System.out.println("Connect Event");
+        delegate.onConnect();
     }
 
     @Override
     public void onPrivateMessage(String sender, String login, String hostname, String message) {
-        System.out.println("Privmsg Event: sender=" + sender + ",login=" + login + ",hostname=" + hostname + "message=" + message);
+        delegate.onPrivateMessage(sender, login, hostname, message);
     }
 
     @Override
     public void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) {
-        System.out.println("Notice Event: sourceNick=" + sourceNick + ",sourceLogin=" + sourceLogin + ",sourceHostname=" + sourceHostname + "target=" + target + "notice=" + notice);
+        delegate.onNotice(sourceNick, sourceLogin, sourceHostname, target, notice);
     }
 
     @Override
     public void onMessage(String channel, String sender, String login, String hostname, String message) {
-        System.out.println("Message Event: channel=" + channel + ",sender=" + sender + ",login=" + login + ",hostname=" + hostname + "message=" + message);
+        onMessage(channel, sender, login, hostname, message);
     }
 
     @Override
     public void onAction(String sender, String login, String hostname, String target, String action) {
-        System.out.println("Action Event: sender=" + sender + ",login=" + login + ",hostname=" + hostname + "target=" + target + "action=" + action);
+        delegate.onAction(sender, login, hostname, target, action);
     }
 
     @Override
@@ -79,13 +84,8 @@ public class MainBot extends PircBot implements IrcBot {
     }
 
     @Override
-    public void onVersion(String sourceNick, String sourceLogin, String sourceHostname, String target) {
-        this.sendRawLine("NOTICE " + sourceNick + " :\u0001VERSION " + "BobChat " + "1.0 alpha" + "\u0001");
-    }
-
-    @Override
     public void onNickChange(String oldNick, String login, String hostname, String newNick) {
-        super.onNickChange(oldNick, login, hostname, newNick);
+        delegate.onNickChange(oldNick, login, hostname, newNick);
     }
 
     @Override
@@ -99,12 +99,17 @@ public class MainBot extends PircBot implements IrcBot {
 
     @Override
     public void onUsernameList(String channel, List<de.rretzbach.bobchat.irc.User> users) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        delegate.onUsernameList(channel, users);
     }
 
     @Override
     public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-        super.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
+        delegate.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
+    }
+
+    @Override
+    public void setDelegate(IrcBotDelegate delegate) {
+        this.delegate = delegate;
     }
     
     

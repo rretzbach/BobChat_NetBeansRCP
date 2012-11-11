@@ -204,4 +204,8 @@ public class TestBot implements IrcBot {
     public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    @Override
+    public void setDelegate(IrcBotDelegate delegate) {
+    }
 }

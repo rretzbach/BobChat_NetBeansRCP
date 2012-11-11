@@ -11,6 +11,9 @@ import de.rretzbach.bobchat.irc.message.PrivateMessage;
 import de.rretzbach.bobchat.irc.message.ChatMessage;
 import de.rretzbach.bobchat.core.ConversationTreeNodes;
 import de.rretzbach.bobchat.core.util.WindowUtil;
+import de.rretzbach.bobchat.irc.message.NickChangeMessage;
+import de.rretzbach.bobchat.irc.message.PartMessage;
+import de.rretzbach.bobchat.irc.message.QuitMessage;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -26,7 +29,7 @@ import org.openide.util.Exceptions;
  *
  * @author rretzbach
  */
-public class Network implements IrcConnectionListener, IrcMessageListener, IrcConnection {
+public class Network implements IrcBotDelegate {
 
     protected List<Conversation> conversations = new ArrayList<Conversation>();
     private List<NickChangeListener> nickChangeListeners = new LinkedList<NickChangeListener>();
@@ -47,68 +50,17 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
         this.hostname = hostname;
 
         // exchange implementations by using either TestBot or MainBot
-        this.bot = new MainBot(identity) {
-            @Override
-            public void onConnect() {
-                Network.this.onConnect();
-            }
-
-            @Override
-            public void onDisconnect() {
-                Network.this.onDisconnect();
-            }
-
-            @Override
-            public void onJoin(String channel, String sender, String login, String hostname) {
-                Network.this.onJoin(channel, sender, login, Network.this.hostname);
-            }
-
-            @Override
-            public void onMessage(String channel, String sender, String login, String hostname, String message) {
-                Network.this.onMessage(channel, sender, login, Network.this.hostname, message);
-            }
-
-            @Override
-            public void onPart(String channel, String sender, String login, String hostname) {
-                Network.this.onPart(channel, sender, login, Network.this.hostname);
-            }
-
-            @Override
-            public void onPrivateMessage(String sender, String login, String hostname, String message) {
-                Network.this.onPrivateMessage(sender, login, Network.this.hostname, message);
-            }
-
-            @Override
-            public void onAction(String sender, String login, String hostname, String target, String action) {
-                Network.this.onAction(sender, login, hostname, target, action);
-            }
-
-            @Override
-            public void onNotice(String sourceNick, String sourceLogin, String sourceHostname, String target, String notice) {
-                Network.this.onNotice(sourceNick, sourceLogin, sourceHostname, target, notice);
-            }
-
-            @Override
-            public void onNickChange(String oldNick, String login, String hostname, String newNick) {
-                Network.this.onNickChange(oldNick, login, hostname, newNick);
-            }
-
-            @Override
-            public void onUsernameList(String channel, List<User> users) {
-                Network.this.onUsernameList(channel, users);
-            }
-
-            @Override
-            public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-                Network.this.onQuit(sourceNick, sourceLogin, sourceHostname, reason);
-            }
-        };
+        this.bot = new MainBot(identity, hostname);
+        this.bot.setDelegate(this);
+        
+        //this.bot = new TestBot(identity);
     }
 
     @Override
     public void onConnect() {
         status = Status.CONNECTED;
 
+        // TODO if the current nick is not the primary nick change nick first and upon successfully changing nick try to identify
         sendAnyMessage("NickServ", "identify " + identity.password);
 
         final Iterator<Runnable> it = connectActions.iterator();
@@ -117,7 +69,6 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
             it.remove();
         }
 
-        // TODO don't execute on EDT
         for (Conversation conv : conversations) {
             if (conv instanceof Channel) {
                 joinChannel(conv.getName());
@@ -133,8 +84,7 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     @Override
     public void onDisconnect() {
         status = Status.DISCONNECTED;
-        reconnectUntilConnected();
-
+        connect(hostname);
     }
 
     @Override
@@ -159,14 +109,15 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
         }
     }
 
-    private void onChannelPart(String channel) {
-        // do nothing
+    private void onSelfPart(String channel) {
+        Channel channelRef = findChannelByName(channel);
+        channelRef.onPart(bot.getNick());
     }
 
     @Override
     public void onPart(final String channel, final String sender, String login, String hostname) {
         if (sender.equals(bot.getNick())) {
-            onChannelPart(channel);
+            onSelfPart(channel);
             return;
         }
 
@@ -220,9 +171,57 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     }
 
     @Override
-    public void connect(String hostname) throws IOException, IrcException, NickAlreadyInUseException {
+    public void connect(final String hostname) {
         status = Status.CONNECTING;
-        bot.connect(hostname, 6667, identity.password);
+        try {
+            bot.connect(hostname, 6667, identity.password);
+        } catch (IOException ex) {
+            System.out.println("Error while connecting: " + ex.getLocalizedMessage());
+            // there is no exception class AlreadyConnectedException
+            if (ex.getMessage().matches(".*is already connected.*")) {
+                // simulate a successful connection
+                onConnect();
+                return;
+            }
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (status != Status.CONNECTED || status != Status.CONNECTING) {
+                            Thread.sleep(5000);
+                            Network.this.connect(hostname);
+                        }
+                    } catch (InterruptedException ex1) {
+                        Exceptions.printStackTrace(ex1);
+                    }
+                }
+            }).start();
+        } catch (NickAlreadyInUseException ex) {
+            System.out.println("Nick [" + bot.getNick() + "] is already in use");
+            // choose altnick or append r to currently tried nick
+            final String altNick = Config.get().getIdentity(hostname).nick_2;
+            if (altNick != bot.getNick()) {
+                bot.changeNick(altNick);
+            } else {
+                bot.changeNick(bot.getNick()+"r");
+            }
+            // try again to connect
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        if (status != Status.CONNECTED || status != Status.CONNECTING) {
+                            Thread.sleep(5000);
+                            Network.this.connect(hostname);
+                        }
+                    } catch (InterruptedException ex1) {
+                        Exceptions.printStackTrace(ex1);
+                    }
+                }
+            }).start();
+        } catch (IrcException ex) {
+            Exceptions.printStackTrace(ex);
+        }
     }
 
     @Override
@@ -440,13 +439,11 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
 
     @Override
     public void onNickChange(String oldNick, String login, String hostname, String newNick) {
-        if (oldNick.equals(bot.getNick()) || newNick.equals(bot.getNick())) {
-            for (NickChangeListener listener : this.nickChangeListeners) {
-                listener.onNickChange(oldNick, login, hostname, newNick);
+        // TODO query changes its name on nickchange
+        for (Conversation conversation : conversations) {
+            if (conversation instanceof Channel && ((Channel) conversation).getUsers().contains(new User("", oldNick))) {
+                ((Channel) conversation).onNickChange(newNick, oldNick);
             }
-            // TODO display own nickchange
-        } else {
-            // TODO nickchange for other ppl
         }
     }
 
@@ -469,14 +466,17 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
     }
 
     @Override
-    // TODO don't execute on EDT
     public void onUsernameList(String channel, List<User> users) {
         getChannel(channel).setUsers(users);
     }
 
     @Override
     public void onQuit(String sourceNick, String sourceLogin, String sourceHostname, String reason) {
-        addNickMessage(sourceNick, new ChatMessage(new Date(), "<--", sourceNick + " has quit (" + reason + ")"));
+        for (Conversation conversation : conversations) {
+            if (conversation instanceof Channel && ((Channel) conversation).getUsers().contains(new User("", sourceNick))) {
+                ((Channel) conversation).onQuit(sourceNick, reason);
+            }
+        }
     }
 
     private void addNickMessage(String nick, ChatMessage chatMessage) {
@@ -487,34 +487,15 @@ public class Network implements IrcConnectionListener, IrcMessageListener, IrcCo
         }
     }
 
-    private void reconnectUntilConnected() {
-        try {
-            System.out.println("Attempting reconnect");
-            connect(hostname);
-        } catch (IOException ex) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        if (status != Status.CONNECTED || status != Status.CONNECTING) {
-                            Thread.sleep(5000);
-                            reconnectUntilConnected();
-                        }
-                    } catch (InterruptedException ex1) {
-                        Exceptions.printStackTrace(ex1);
-                    }
-                }
-            }).start();
-            Exceptions.printStackTrace(ex);
-        } catch (NickAlreadyInUseException ex) {
-            Exceptions.printStackTrace(ex);
-        } catch (IrcException ex) {
-            Exceptions.printStackTrace(ex);
-        }
+    private boolean isMe(String sourceNick) {
+        return sourceNick.equals(bot.getNick());
+    }
+
+    Iterable<NickChangeListener> getNickChangeListeners() {
+        return this.nickChangeListeners;
     }
 
     public enum Status {
-
         DISCONNECTED, CONNECTING, CONNECTED
     }
 }

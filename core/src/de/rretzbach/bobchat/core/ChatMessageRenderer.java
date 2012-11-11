@@ -44,7 +44,8 @@ public class ChatMessageRenderer {
         return new JLabel(message.nick);
     }
 
-    // TODO Anzuzeigende Umlaute trotz encoding korrigieren
+    // TODO if using utf-8 try to correct latin1 umlauts
+    // TODO render nick highlights
     Component renderMessage() {
         final LabelTextPane textpane = new LabelTextPane();
         final StyledDocument doc = textpane.getStyledDocument();

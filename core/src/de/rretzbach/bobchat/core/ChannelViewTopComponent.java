@@ -153,7 +153,7 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
                 }
                 conversation.getNetwork().addNickChangeListener(new NickChangeListener() {
                     @Override
-                    public void onNickChange(String oldNick, String login, String hostname, String newNick) {
+                    public void onNickChange(String newNick, String oldNick) {
                         jLabel1.setText(newNick);
                     }
                 });

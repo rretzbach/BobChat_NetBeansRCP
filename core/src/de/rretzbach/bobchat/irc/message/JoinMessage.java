@@ -8,10 +8,10 @@ import java.util.Date;
  */
 public class JoinMessage extends ChatMessage {
     public JoinMessage(Date timestamp, String nick, String channel) {
-        super(timestamp, "-->", nick + " hat " + channel + " betreten");
+        super(timestamp, "-->", nick + " has joined " + channel);
     }
     
     public JoinMessage(Date timestamp, String channel) {
-        super(timestamp, "-->", "Sie sind jetzt im Gespräch über " + channel);
+        super(timestamp, "-->", "You have joined " + channel);
     }
 }

@@ -9,5 +9,5 @@ package de.rretzbach.bobchat.irc.util;
  * @author rretzbach
  */
 public interface NickChangeListener {
-    void onNickChange(String oldNick, String login, String hostname, String newNick);
+    void onNickChange(String oldNick, String newNick);
 }

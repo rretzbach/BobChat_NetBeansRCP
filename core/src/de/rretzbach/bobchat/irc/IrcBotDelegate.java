@@ -8,7 +8,6 @@ import de.rretzbach.bobchat.irc.util.IrcMessageListener;
  *
  * @author rretzbach
  */
-public interface IrcBot extends IrcBotDelegate {
+public interface IrcBotDelegate extends IrcConnection, IrcConnectionListener, IrcMessageListener {
 
-    public void setDelegate(IrcBotDelegate delegate);
 }
