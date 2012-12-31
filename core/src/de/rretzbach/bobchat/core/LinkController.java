@@ -98,7 +98,7 @@ public class LinkController extends MouseAdapter
                     String href = (String) a.getAttribute(HTML.Attribute.HREF);
                     if (href != null) {
                         try {
-                            if (!href.startsWith("http://")) {
+                            if (!href.contains("://")) {
                                 href = "http://" + href;
                             }
                             editor.fireHyperlinkUpdate(new HyperlinkEvent(this, HyperlinkEvent.EventType.ACTIVATED, new URL(href)));

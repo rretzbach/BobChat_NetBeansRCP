@@ -49,7 +49,6 @@ public class NetworkTreeNodes extends Children.Keys<Network> implements NetworkL
         AbstractNode node = new AbstractNode(new ConversationTreeNodes(network)) {
             @Override
             public Action[] getActions(boolean context) {
-                final AbstractNode node = this;
                 Action joinChannel = new AbstractAction("Join channel") {
                     @Override
                     public void actionPerformed(ActionEvent e) {
@@ -57,7 +56,13 @@ public class NetworkTreeNodes extends Children.Keys<Network> implements NetworkL
                         WindowUtil.openChannelWindow(network.getHostname(), input);
                     }
                 };
-                return new Action[]{joinChannel};
+                Action reconnectNetwork = new AbstractAction("Reconnect") {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        network.reconnect();
+                    }
+                };
+                return new Action[]{joinChannel, reconnectNetwork};
             }
         
         };

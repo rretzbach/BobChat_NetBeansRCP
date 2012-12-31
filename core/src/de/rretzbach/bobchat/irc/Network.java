@@ -172,6 +172,7 @@ public class Network implements IrcBotDelegate {
 
     @Override
     public void connect(final String hostname) {
+        System.out.println("attempting connection");
         status = Status.CONNECTING;
         try {
             bot.connect(hostname, 6667, identity.password);
@@ -197,10 +198,11 @@ public class Network implements IrcBotDelegate {
                 }
             }).start();
         } catch (NickAlreadyInUseException ex) {
+            System.out.println("Error while connecting: " + ex.getLocalizedMessage());
             System.out.println("Nick [" + bot.getNick() + "] is already in use");
             // choose altnick or append r to currently tried nick
             final String altNick = Config.get().getIdentity(hostname).nick_2;
-            if (altNick != bot.getNick()) {
+            if (!altNick.equals(bot.getNick())) {
                 bot.changeNick(altNick);
             } else {
                 bot.changeNick(bot.getNick()+"r");
@@ -220,6 +222,7 @@ public class Network implements IrcBotDelegate {
                 }
             }).start();
         } catch (IrcException ex) {
+            System.out.println("Error while connecting: " + ex.getLocalizedMessage());
             Exceptions.printStackTrace(ex);
         }
     }
@@ -245,8 +248,8 @@ public class Network implements IrcBotDelegate {
     }
 
     @Override
-    public void reconnect() throws IOException, IrcException, NickAlreadyInUseException {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void reconnect() {
+        connect(hostname);
     }
 
     @Override

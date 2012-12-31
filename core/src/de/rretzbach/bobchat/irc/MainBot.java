@@ -65,7 +65,7 @@ public class MainBot extends PircBot implements IrcBot {
 
     @Override
     public void onMessage(String channel, String sender, String login, String hostname, String message) {
-        onMessage(channel, sender, login, hostname, message);
+        delegate.onMessage(channel, sender, login, hostname, message);
     }
 
     @Override

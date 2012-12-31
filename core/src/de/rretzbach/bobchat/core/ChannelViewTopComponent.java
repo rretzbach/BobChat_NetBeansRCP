@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import oracle.jrockit.jfr.openmbean.EventDefaultType;
 import org.openide.util.NbBundle;
 import org.openide.windows.TopComponent;
@@ -153,17 +154,30 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
                 }
                 conversation.getNetwork().addNickChangeListener(new NickChangeListener() {
                     @Override
-                    public void onNickChange(String newNick, String oldNick) {
-                        jLabel1.setText(newNick);
+                    public void onNickChange(final String newNick, String oldNick) {
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                jLabel1.setText(newNick);
+                            }
+                        });
                     }
                 });
-                jLabel1.setText(conversation.getNetwork().getNick());
+
+                final Conversation conv = conversation;
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        jLabel1.setText(conv.getNetwork().getNick());
+                    }
+                });
+
 
                 setConversation(conversation);
             }
         };
         if (SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(linkWindowToModel);
+            new Thread(linkWindowToModel).start();
         } else {
             linkWindowToModel.run();
         }
@@ -215,12 +229,7 @@ public final class ChannelViewTopComponent extends TopComponent implements ChatM
     }
 
     protected void clearInputField(final JTextField textfield) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                textfield.setText("");
-            }
-        });
+        textfield.setText("");
     }
 
     public void setType(String type) {

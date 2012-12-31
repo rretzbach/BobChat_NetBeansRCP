@@ -5,6 +5,7 @@ import de.rretzbach.bobchat.irc.message.ChatMessageListener;
 import de.rretzbach.bobchat.irc.command.IrcCommandInterpreter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -71,7 +72,7 @@ public class Conversation {
 
     public void addMessage(ChatMessage message) {
         messages.add(message);
-        for (ChatMessageListener listener : this.listener) {
+        for (ChatMessageListener listener : new LinkedList<ChatMessageListener>(this.listener)) {
             listener.onMessage(message);
         }
     }

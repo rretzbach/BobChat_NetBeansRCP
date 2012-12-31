@@ -15,7 +15,7 @@ public class Router {
 
     protected List<Network> networks = new ArrayList<Network>();
     
-    public static Router get() {
+    public static synchronized Router get() {
         if (instance == null) {
             instance = new Router();
         }
@@ -23,7 +23,7 @@ public class Router {
     }
     private List<NetworkListener> listener = new ArrayList<NetworkListener>();
     
-    public Network getNetwork(String hostname) {
+    public synchronized Network getNetwork(String hostname) {
         Network found = findNetwork(hostname);
         if (found == null) {
             Identity identity = Config.get().getIdentity(hostname);
@@ -44,11 +44,11 @@ public class Router {
         return null;
     }
 
-    public List<Network> getNetworks() {
+    public synchronized List<Network> getNetworks() {
         return Collections.unmodifiableList(networks);
     }
 
-    public void addNetworkListener(NetworkListener listener) {
+    public synchronized void addNetworkListener(NetworkListener listener) {
         this.listener.add(listener);
     }
 
